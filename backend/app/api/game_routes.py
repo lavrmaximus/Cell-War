@@ -18,7 +18,9 @@ def get_game(game_id: str):
     """Получает состояние игры по ID."""
     game = game_manager.get_game_state(game_id)
     if game:
-        return jsonify(game.to_dict())
+        response_data = game.to_dict()
+        response_data['gameId'] = game_id
+        return jsonify(response_data)
     return jsonify({"error": "Game not found"}), 404
 
 @game_api_blueprint.route('/api/game/<game_id>/end_turn', methods=['POST'])
@@ -26,7 +28,9 @@ def end_player_turn(game_id: str):
     """Завершает ход текущего игрока."""
     game = game_manager.end_turn(game_id)
     if game:
-        return jsonify(game.to_dict())
+        response_data = game.to_dict()
+        response_data['gameId'] = game_id
+        return jsonify(response_data)
     return jsonify({"error": "Game not found"}), 404
 
 @game_api_blueprint.route('/api/game/<game_id>/action', methods=['POST'])
@@ -38,5 +42,7 @@ def handle_action(game_id: str):
 
     game = game_manager.perform_action(game_id, action_data)
     if game:
-        return jsonify(game.to_dict())
+        response_data = game.to_dict()
+        response_data['gameId'] = game_id
+        return jsonify(response_data)
     return jsonify({"error": "Game not found"}), 404

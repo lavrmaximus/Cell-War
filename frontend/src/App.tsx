@@ -1,12 +1,12 @@
 import React, { useState, useEffect, ChangeEvent } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import './App.css';
-import GameBoard from './components/GameBoard';
-import PlayerPanel from './components/PlayerPanel';
-import ActionPanel from './components/ActionPanel';
-import MapEditor from './components/MapEditor';
-import { GameState, Cell } from './types/game';
-import { playSound } from './utils/sounds';
+import GameBoard from './components/GameBoard.tsx';
+import PlayerPanel from './components/PlayerPanel.tsx';
+import ActionPanel from './components/ActionPanel.tsx';
+import MapEditor from './components/MapEditor.tsx';
+import { GameState, Cell } from './types/game.ts';
+import { playSound } from './utils/sounds.ts';
 
 const API_URL = 'http://localhost:5000';
 
@@ -49,20 +49,31 @@ const Game: React.FC = () => {
   };
 
   const createNewGame = async () => {
-    let body: any = { type: mapType };
-    if (mapType === 'custom' && customMap) {
-      body.data = customMap;
-    }
+    try {
+      let body: any = { type: mapType };
+      if (mapType === 'custom' && customMap) {
+        body.data = customMap;
+      }
 
-    const response = await fetch(`${API_URL}/api/game`, { 
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const data = await response.json();
-    setGameState(data);
-    setSelectedCell(null);
-    playSound('start.mp3');
+      const response = await fetch(`${API_URL}/api/game`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
+        throw new Error(`Server error: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
+      }
+
+      const data = await response.json();
+      setGameState(data);
+      setSelectedCell(null);
+      playSound('start.mp3');
+    } catch (error) {
+      console.error('Failed to create new game:', error);
+      alert(`Could not start new game: ${error.message}`);
+    }
   };
 
   const saveGame = () => {
@@ -87,8 +98,14 @@ const Game: React.FC = () => {
     playSound('click.mp3');
   };
 
-  const handleAction = async (actionType: string) => {
+  const handleAction = async (actionType: string, options?: { amount?: number }) => {
     if (!gameState || (!selectedCell && actionType !== 'END_TURN')) return;
+
+    // Prevent action if gameId is missing
+    if (!gameState.gameId) {
+      alert("Error: Game ID is missing. Cannot perform action.");
+      return;
+    }
 
     let url = '';
     let body: any = {};
@@ -103,19 +120,32 @@ const Game: React.FC = () => {
         playerId: gameState.currentPlayerId,
         cell: { x: selectedCell!.x, y: selectedCell!.y },
       };
+      if (actionType === 'UPGRADE_DEFENSE' && options?.amount) {
+        body.amount = options.amount;
+      }
       if (actionType === 'CAPTURE') playSound('capture.mp3');
       if (actionType === 'BUILD_FARM') playSound('build.mp3');
     }
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: Object.keys(body).length > 0 ? JSON.stringify(body) : null,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: Object.keys(body).length > 0 ? JSON.stringify(body) : null,
+      });
 
-    const updatedGame = await response.json();
-    setGameState(updatedGame);
-    setSelectedCell(null); // Deselect cell after action
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
+        throw new Error(`Server error: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
+      }
+
+      const updatedGame = await response.json();
+      setGameState(updatedGame);
+      setSelectedCell(null); // Deselect cell after action
+    } catch (error) {
+      console.error('Failed to perform action:', error);
+      alert(`Action failed: ${error.message}`);
+    }
   };
 
   return (

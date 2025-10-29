@@ -1,6 +1,6 @@
 import React from 'react';
-import { GameState, Cell as CellType } from '../types/game';
-import Cell from './Cell';
+import { GameState, Cell as CellType } from '../types/game.ts';
+import Cell from './Cell.tsx';
 
 interface GameBoardProps {
     gameState: GameState;

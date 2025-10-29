@@ -1,5 +1,5 @@
 import React from 'react';
-import { GameState, Player } from '../types/game';
+import { GameState, Player } from '../types/game.ts';
 
 interface PlayerPanelProps {
     gameState: GameState | null;

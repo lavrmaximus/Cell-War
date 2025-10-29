@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Cell as CellType } from '../types/game';
+import { Cell as CellType } from '../types/game.ts';
 
 const GRID_SIZE = 20;
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Cell as CellType } from '../types/game';
+import { Cell as CellType } from '../types/game.ts';
 
 interface CellProps {
     cell: CellType;

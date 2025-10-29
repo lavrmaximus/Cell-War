@@ -45,12 +45,21 @@ def create_new_game(map_options: Dict[str, Any] = {}) -> GameState:
                     river_y += random.choice([-1, 1])
                     river_y = max(0, min(grid_size - 1, river_y))
 
-    # Устанавливаем стартовые позиции игроков (если карта не кастомная)
+    # Устанавливаем стартовые позиции игроков (3x3) (если карта не кастомная)
     if not map_data:
-        game.cells[2][2].owner_id = player1.id
-        game.cells[2][2].defense = 10
-        game.cells[grid_size - 3][grid_size - 3].owner_id = player2.id
-        game.cells[grid_size - 3][grid_size - 3].defense = 10
+        # Player 1 start area
+        for i in range(3):
+            for j in range(3):
+                px, py = 1 + i, 1 + j
+                game.cells[px][py].owner_id = player1.id
+                game.cells[px][py].type = 'plain' # Очищаем местность
+
+        # Player 2 start area
+        for i in range(3):
+            for j in range(3):
+                px, py = (grid_size - 4) + i, (grid_size - 4) + j
+                game.cells[px][py].owner_id = player2.id
+                game.cells[px][py].type = 'plain' # Очищаем местность
 
     games[game_id] = game
     return game_id, game
@@ -67,9 +76,8 @@ def end_turn(game_id: str) -> GameState | None:
 
     # Рассчитываем доход для текущего игрока перед завершением хода
     current_player = game.players[game.current_player_id]
-    income = 10 # Базовый доход
     farm_count = sum(1 for row in game.cells for cell in row if cell.owner_id == current_player.id and cell.building == 'farm')
-    income += farm_count * 5 # Доход от ферм
+    income = farm_count # Доход от ферм по правилам
     current_player.gold += income
 
     # Передаем ход следующему игроку
@@ -84,6 +92,19 @@ def end_turn(game_id: str) -> GameState | None:
 
     return game
 
+def is_adjacent(game: GameState, x: int, y: int, player_id: str) -> bool:
+    """Проверяет, является ли ячейка (x, y) соседней с территорией игрока."""
+    grid_size = len(game.cells)
+    for dx in [-1, 0, 1]:
+        for dy in [-1, 0, 1]:
+            if dx == 0 and dy == 0:
+                continue
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < grid_size and 0 <= ny < grid_size:
+                if game.cells[nx][ny].owner_id == player_id:
+                    return True
+    return False
+
 def perform_action(game_id: str, action_data: dict) -> GameState | None:
     """Обрабатывает действие игрока."""
     game = get_game_state(game_id)
@@ -94,7 +115,7 @@ def perform_action(game_id: str, action_data: dict) -> GameState | None:
     player_id = action_data.get('playerId')
     
     if player_id != game.current_player_id:
-        return game
+        return game # Не ход этого игрока
 
     player = game.players[player_id]
     cell_coords = action_data.get('cell')
@@ -105,21 +126,44 @@ def perform_action(game_id: str, action_data: dict) -> GameState | None:
     cell = game.cells[x][y]
 
     if action_type == 'CAPTURE':
-        # Логика захвата
-        if player.gold >= 10 and cell.owner_id != player_id:
-            player.gold -= 10
+        # 1. Проверка на непроходимость
+        if cell.type in ['mountain', 'water']:
+            return game # Нельзя захватывать
+
+        # 2. Проверка на соседство (кроме самого первого хода, когда у игрока может не быть клеток)
+        player_cell_count = sum(1 for row in game.cells for c in row if c.owner_id == player_id)
+        if player_cell_count > 0 and not is_adjacent(game, x, y, player_id):
+            return game # Не соседняя клетка
+
+        # 3. Расчет стоимости
+        cost = 1 # Базовая стоимость для нейтральной клетки
+        if cell.owner_id and cell.owner_id != player_id:
+            cost += cell.defense # + защита для вражеской
+        if cell.type == 'hill':
+            cost += 1 # +1 за холм
+
+        # 4. Проверка золота и выполнение захвата
+        if player.gold >= cost and cell.owner_id != player_id:
+            player.gold -= cost
             cell.owner_id = player_id
 
     elif action_type == 'BUILD_FARM':
-        # Логика постройки фермы
-        if cell.owner_id == player_id and not cell.building and player.gold >= 25:
-            player.gold -= 25
+        # Логика постройки фермы по правилам
+        farm_count = sum(1 for row in game.cells for c in row if c.owner_id == player_id and c.building == 'farm')
+        cost = (farm_count // 10) + 1
+        
+        if cell.owner_id == player_id and not cell.building and player.gold >= cost:
+            player.gold -= cost
             cell.building = 'farm'
 
     elif action_type == 'UPGRADE_DEFENSE':
-        # Логика улучшения защиты
-        if cell.owner_id == player_id and player.gold >= 15:
-            player.gold -= 15
-            cell.defense += 5
+        # Логика улучшения защиты по правилам
+        amount = action_data.get('amount', 1) # Фронтенд должен присылать 'amount'
+        if not (1 <= amount <= 9):
+            amount = 1 # Ограничение
+
+        if cell.owner_id == player_id and not cell.building and player.gold >= amount:
+            player.gold -= amount
+            cell.defense += amount
 
     return game

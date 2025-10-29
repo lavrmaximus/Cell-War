@@ -7,8 +7,8 @@ class Player:
         self.id = id
         self.name = name
         self.color = color
-        self.gold = 100  # Начальное золото
-        self.income = 10 # Начальный доход
+        self.gold = 10  # Начальное золото
+        self.income = 0 # Начальный доход
 
     def to_dict(self):
         return {
