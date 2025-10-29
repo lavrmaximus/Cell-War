@@ -79,6 +79,7 @@ def end_turn(game_id: str) -> GameState | None:
     farm_count = sum(1 for row in game.cells for cell in row if cell.owner_id == current_player.id and cell.building == 'farm')
     income = farm_count # Доход от ферм по правилам
     current_player.gold += income
+    current_player.income = income
 
     # Передаем ход следующему игроку
     player_ids = list(game.players.keys())

@@ -1,9 +1,38 @@
 .App {
-  text-align: center;
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
+  padding: 20px;
+  min-height: 100vh; /* Ensure App takes full viewport height */
+}
+
+.App-header {
+  position: relative; /* For absolute positioning of game board */
+  display: flex;
+  flex-grow: 1; /* Allow header to take available space */
+  justify-content: flex-start; /* Align content to the start (left) */
+  align-items: flex-start; /* Align items to the top */
+  padding-top: 20px; /* Add some padding at the top */
+}
+
+.App-header h1 {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10; /* Ensure title is above everything */
+}
+
+.game-ui-panel {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
   padding: 20px;
+  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background for UI */
+  border-radius: 8px;
+  z-index: 1; /* Ensure UI is above game board */
+  flex-shrink: 0; /* Prevent UI from shrinking */
+  width: 250px; /* Fixed width for the UI panel */
+  margin-right: 20px; /* Space between UI and game board */
 }
 
 @keyframes flash {
@@ -13,4 +42,12 @@
 
 .cell-captured {
   animation: flash 0.5s ease-out;
+}
+
+.game-board-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0; /* Place it behind other UI elements */
 }

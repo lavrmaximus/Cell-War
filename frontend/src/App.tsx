@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, useCallback } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import './App.css';
 import GameBoard from './components/GameBoard.tsx';
@@ -93,12 +93,7 @@ const Game: React.FC = () => {
     }
   };
 
-  const handleCellClick = (cell: Cell) => {
-    setSelectedCell(cell);
-    playSound('click.mp3');
-  };
-
-  const handleAction = async (actionType: string, options?: { amount?: number }) => {
+  const handleAction = useCallback(async (actionType: string, options?: { amount?: number }) => {
     if (!gameState || (!selectedCell && actionType !== 'END_TURN')) return;
 
     // Prevent action if gameId is missing
@@ -146,6 +141,39 @@ const Game: React.FC = () => {
       console.error('Failed to perform action:', error);
       alert(`Action failed: ${error.message}`);
     }
+  }, [gameState, selectedCell, setGameState, setSelectedCell]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!gameState) return; // Hotkeys only active when game is in progress
+
+      switch (event.key.toUpperCase()) {
+        case 'Q':
+          if (selectedCell) handleAction('CAPTURE');
+          break;
+        case 'W':
+          if (selectedCell) handleAction('BUILD_FARM');
+          break;
+        case 'E':
+          if (selectedCell) handleAction('UPGRADE_DEFENSE');
+          break;
+        case 'R':
+          handleAction('END_TURN');
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [gameState, selectedCell, handleAction]);
+
+  const handleCellClick = (cell: Cell) => {
+    setSelectedCell(cell);
+    playSound('click.mp3');
   };
 
   return (
@@ -169,15 +197,17 @@ const Game: React.FC = () => {
             <button onClick={loadGame}>Load Game</button>
           </div>
         ) : (
-          <main style={{ display: 'flex', gap: '20px' }}>
-            <div>
+          <> 
+            <main className="game-ui-panel">
               <PlayerPanel gameState={gameState} />
               <ActionPanel selectedCell={selectedCell} gameState={gameState} onAction={handleAction} />
               <hr />
               <button onClick={saveGame}>Save Game</button>
+            </main>
+            <div className="game-board-container">
+              <GameBoard gameState={gameState} selectedCell={selectedCell} onCellClick={handleCellClick} />
             </div>
-            <GameBoard gameState={gameState} selectedCell={selectedCell} onCellClick={handleCellClick} />
-          </main>
+          </>
         )}
       </header>
   );

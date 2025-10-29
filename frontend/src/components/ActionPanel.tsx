@@ -61,6 +61,13 @@ const ActionPanel: React.FC<ActionPanelProps> = ({ selectedCell, gameState, onAc
             
             <hr />
             <button onClick={() => onAction('END_TURN')}>End Turn</button>
+            <div style={{ marginTop: '20px', fontSize: '0.8em', color: '#aaa' }}>
+                <h4>Hotkeys:</h4>
+                <p>Q: Capture</p>
+                <p>W: Build Farm</p>
+                <p>E: Upgrade Defense</p>
+                <p>R: End Turn</p>
+            </div>
         </div>
     );
 };
