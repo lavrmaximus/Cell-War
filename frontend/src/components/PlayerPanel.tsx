@@ -13,13 +13,13 @@ const PlayerPanel: React.FC<PlayerPanelProps> = ({ gameState }) => {
     const players = Object.values(gameState.players);
 
     return (
-        <div className="player-panel">
-            <h2>Players</h2>
+        <div className="player-panel card mb-3">
+            <h2 className="card-title">Players</h2>
             {players.map(player => (
-                <div key={player.id} style={{ color: player.color, border: player.id === gameState.currentPlayerId ? '2px solid gold' : 'none', padding: '5px' }}>
-                    <h3>{player.name}</h3>
-                    <p>Gold: {player.gold}</p>
-                    <p>Income: {player.income}</p>
+                <div key={player.id} className="card-body mb-2" style={{ color: player.color, border: player.id === gameState.currentPlayerId ? '2px solid gold' : 'none', padding: '5px' }}>
+                    <h3 className="card-subtitle mb-2">{player.name}</h3>
+                    <p className="card-text">Gold: {player.gold}</p>
+                    <p className="card-text">Income: {player.income}</p>
                 </div>
             ))}
         </div>

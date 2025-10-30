@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { Cell as CellType } from '../types/game.ts';
 
 interface CellProps {
@@ -7,53 +7,81 @@ interface CellProps {
     onClick: (cell: CellType) => void;
 }
 
+// Mapping cell types to their sprite files in the public folder
+const terrainSpriteMap: { [key: string]: string } = {
+    plain: '/sprites/Grass.png',
+    mountain: '/sprites/Mountain.png',
+    hill: '/sprites/Hill.png',
+    water: '/sprites/Water.png',
+};
+
+const buildingSpriteMap: { [key: string]: string } = {
+    farm: '/sprites/Farm.png',
+};
+
+// Player colors with 30% opacity
+const playerColorMap: { [key: string]: string } = {
+    player1: 'rgba(219, 50, 77, 0.3)', // #db324d
+    player2: 'rgba(87, 98, 213, 0.3)', // #5762d5
+};
+
 const Cell: React.FC<CellProps> = ({ cell, isSelected, onClick }) => {
-    const [isCaptured, setIsCaptured] = useState(false);
-    const prevOwnerId = useRef(cell.ownerId);
 
-    useEffect(() => {
-        if (prevOwnerId.current !== cell.ownerId && cell.ownerId !== null) {
-            setIsCaptured(true);
-            const timer = setTimeout(() => setIsCaptured(false), 500);
-            return () => clearTimeout(timer);
-        }
-        prevOwnerId.current = cell.ownerId;
-    }, [cell.ownerId]);
-
-    const getBackgroundColor = () => {
-        if (cell.type === 'water') return '#a0c4ff'; // Water
-        if (cell.type === 'mountain') return '#8d99ae'; // Mountain
-
-        if (cell.ownerId === 'player1') return '#cce5ff'; // Player 1 color
-        if (cell.ownerId === 'player2') return '#ffcdd2'; // Player 2 color
-        
-        return '#f8f9fa'; // Neutral plain
-    };
-
-    const style: React.CSSProperties = {
-        border: isSelected ? '2px solid #00ffff' : '1px solid #dee2e6',
-        width: '30px',
-        height: '30px',
-        backgroundColor: getBackgroundColor(),
+    const containerStyle: React.CSSProperties = {
+        border: '1px solid var(--grid-color)', // Consistent border
+        width: '32px',
+        height: '32px',
         cursor: 'pointer',
         position: 'relative',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: '1.2em',
+        boxSizing: 'border-box',
+        outline: isSelected ? '2px solid var(--secondary-color)' : 'none', // Use outline for selection
+        outlineOffset: '-1px', // Draw outline just inside the border
     };
 
-    const buildingStyle: React.CSSProperties = {
-        width: '15px',
-        height: '15px',
-        backgroundColor: '#9c6644', // Farm color
+    const spriteStyle: React.CSSProperties = {
         position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+    };
+
+    const overlayStyle: React.CSSProperties = {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: cell.ownerId ? playerColorMap[cell.ownerId] : 'transparent',
+        transition: 'background-color 0.3s ease',
+    };
+
+    const defenseStyle: React.CSSProperties = {
+        position: 'absolute',
+        bottom: 1,
+        right: 3,
+        fontSize: '0.8em',
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadow: '1px 1px 2px black',
     };
 
     return (
-        <div className={`cell ${isCaptured ? 'cell-captured' : ''}`} style={style} onClick={() => onClick(cell)}>
-            {cell.building === 'farm' && <div style={buildingStyle}></div>}
-            {cell.defense > 0 && <span style={{ position: 'absolute', bottom: 0, right: 2, fontSize: '0.8em', fontWeight: 'bold' }}>{cell.defense}</span>}
+        <div style={containerStyle} onClick={() => onClick(cell)}>
+            {/* Base Terrain Sprite */}
+            <img src={terrainSpriteMap[cell.type] || terrainSpriteMap.plain} style={spriteStyle} alt={cell.type} />
+
+            {/* Player Color Overlay */}
+            <div style={overlayStyle}></div>
+
+            {/* Building Sprite (e.g., Farm) */}
+            {cell.building && buildingSpriteMap[cell.building] && (
+                <img src={buildingSpriteMap[cell.building]} style={spriteStyle} alt={cell.building} />
+            )}
+
+            {/* Defense Value */}
+            {cell.defense > 0 && <span style={defenseStyle}>{cell.defense}</span>}
         </div>
     );
 };

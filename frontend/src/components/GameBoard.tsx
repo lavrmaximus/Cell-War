@@ -10,7 +10,7 @@ interface GameBoardProps {
 
 const GameBoard: React.FC<GameBoardProps> = ({ gameState, selectedCell, onCellClick }) => {
     return (
-        <div className="game-board" style={{ display: 'grid', gridTemplateColumns: `repeat(${gameState.cells[0].length}, 34px)` }}>
+        <div className="game-board" style={{ display: 'grid', gridTemplateColumns: `repeat(${gameState.cells[0].length}, 32px)` }}>
             {gameState.cells.map((row, x) => 
                 row.map((cell, y) => (
                     <Cell 

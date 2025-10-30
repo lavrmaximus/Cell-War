@@ -5,6 +5,7 @@ import GameBoard from './components/GameBoard.tsx';
 import PlayerPanel from './components/PlayerPanel.tsx';
 import ActionPanel from './components/ActionPanel.tsx';
 import MapEditor from './components/MapEditor.tsx';
+// import BackgroundParticles from './components/BackgroundParticles.tsx'; // Removed import
 import { GameState, Cell } from './types/game.ts';
 import { playSound } from './utils/sounds.ts';
 
@@ -13,8 +14,21 @@ const API_URL = 'http://localhost:5000';
 function App() {
   return (
     <div className="App">
-      <nav>
-        <Link to="/">Game</Link> | <Link to="/editor">Map Editor</Link>
+      {/* <BackgroundParticles /> Removed rendering */}
+      <nav className="navbar navbar-expand-lg navbar-light mb-4">
+        <div className="container-fluid">
+          <Link className="navbar-brand" to="/">Cell War</Link>
+          <div className="collapse navbar-collapse">
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <li className="nav-item">
+                <Link className="nav-link" to="/">Game</Link>
+              </li>
+              <li className="nav-item">
+                <Link className="nav-link" to="/editor">Map Editor</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
       </nav>
       <Routes>
         <Route path="/" element={<Game />} />
@@ -70,7 +84,8 @@ const Game: React.FC = () => {
       setGameState(data);
       setSelectedCell(null);
       playSound('start.mp3');
-    } catch (error) {
+    } catch (e) {
+      const error = e as Error;
       console.error('Failed to create new game:', error);
       alert(`Could not start new game: ${error.message}`);
     }
@@ -137,7 +152,8 @@ const Game: React.FC = () => {
       const updatedGame = await response.json();
       setGameState(updatedGame);
       setSelectedCell(null); // Deselect cell after action
-    } catch (error) {
+    } catch (e) {
+      const error = e as Error;
       console.error('Failed to perform action:', error);
       alert(`Action failed: ${error.message}`);
     }
@@ -177,40 +193,41 @@ const Game: React.FC = () => {
   };
 
   return (
-      <header className="App-header">
-        <h1>Cell War</h1>
-        {!gameState ? (
-          <div>
-            <h3>New Game Options</h3>
-            <select value={mapType} onChange={(e) => setMapType(e.target.value)}>
-              <option value="standard">Standard (20x20)</option>
-              <option value="large">Large (30x30)</option>
-              <option value="empty">Empty</option>
-              <option value="custom" disabled={!customMap}>Custom Map</option>
-            </select>
-            <div>
-              <label>Load Custom Map: </label>
-              <input type="file" accept=".json" onChange={handleMapFileChange} />
-            </div>
-            <hr />
-            <button onClick={createNewGame}>Start New Game</button>
-            <button onClick={loadGame}>Load Game</button>
-          </div>
-        ) : (
-          <> 
-            <main className="game-ui-panel">
-              <PlayerPanel gameState={gameState} />
-              <ActionPanel selectedCell={selectedCell} gameState={gameState} onAction={handleAction} />
-              <hr />
-              <button onClick={saveGame}>Save Game</button>
-            </main>
-            <div className="game-board-container">
-              <GameBoard gameState={gameState} selectedCell={selectedCell} onCellClick={handleCellClick} />
-            </div>
-          </>
-        )}
-      </header>
-  );
+            <header className="App-header">
+              <h1 className="display-4 mb-4">Cell War</h1>
+              {!gameState ? (
+                <div className="card p-3">
+                  <h3 className="card-title">New Game Options</h3>
+                  <select className="form-select mb-3" value={mapType} onChange={(e) => setMapType(e.target.value)}>
+                    <option value="standard">Standard (20x20)</option>
+                    <option value="large">Large (30x30)</option>
+                    <option value="empty">Empty</option>
+                    <option value="custom" disabled={!customMap}>Custom Map</option>
+                  </select>
+                  <div className="mb-3">
+                    <label htmlFor="customMapFile" className="form-label">Load Custom Map: </label>
+                    <input id="customMapFile" type="file" accept=".json" className="form-control" onChange={handleMapFileChange} />
+                  </div>
+                  <hr className="my-4" />
+                  <div className="new-game-actions">
+                    <button className="btn btn-primary" onClick={createNewGame}>Start New Game</button>
+                    <button className="btn btn-secondary" onClick={loadGame}>Load Game</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <main className="game-ui-panel">
+                    <PlayerPanel gameState={gameState} />
+                    <ActionPanel selectedCell={selectedCell} gameState={gameState} onAction={handleAction} />
+                    <hr className="my-4" />
+                    <button className="btn btn-info" onClick={saveGame}>Save Game</button>
+                  </main>
+                  <div className="game-board-container">
+                    <GameBoard gameState={gameState} selectedCell={selectedCell} onCellClick={handleCellClick} />
+                  </div>
+                </>
+              )}
+            </header>  );
 }
 
 export default App;

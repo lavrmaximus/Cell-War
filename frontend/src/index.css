@@ -1,3 +1,15 @@
+:root {
+  --primary-color: #B14AED; /* User's vibrant purple */
+  --primary-dark-color: #9A3DD8; /* Darker variant for hover */
+  --secondary-color: #8EDCE6; /* User's light blue for contrast */
+  --background-color: #1A001B; /* Even darker than user's dark purple for depth */
+  --surface-color: #330036;    /* User's dark purple for panels */
+  --grid-color: rgba(255, 255, 255, 0.1); /* Visible grid lines */
+  --text-color: #f0f0f0;      /* Light gray for text */
+  --text-secondary-color: #a9a9a9; /* Muted gray for secondary text */
+  --error-color: #e74c3c;      /* Standard red for errors */
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -5,9 +17,20 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--secondary-color);
 }

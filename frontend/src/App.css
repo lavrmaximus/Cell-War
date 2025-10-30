@@ -3,16 +3,11 @@
   flex-direction: column;
   padding: 20px;
   min-height: 100vh; /* Ensure App takes full viewport height */
+  background-color: transparent; /* Ensure App doesn't hide background */
+  position: relative; /* Set as positioning context for children */
 }
 
-.App-header {
-  position: relative; /* For absolute positioning of game board */
-  display: flex;
-  flex-grow: 1; /* Allow header to take available space */
-  justify-content: flex-start; /* Align content to the start (left) */
-  align-items: flex-start; /* Align items to the top */
-  padding-top: 20px; /* Add some padding at the top */
-}
+
 
 .App-header h1 {
   position: absolute;
@@ -20,6 +15,10 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 10; /* Ensure title is above everything */
+  font-size: 3.5em; /* Large font size */
+  font-weight: bold; /* Make it bold */
+  color: #fff; /* White color for title */
+  text-shadow: 0 0 10px #fff, 0 0 20px #fff; /* White glowing effect */
 }
 
 .game-ui-panel {
@@ -27,12 +26,160 @@
   flex-direction: column;
   gap: 20px;
   padding: 20px;
-  background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent background for UI */
-  border-radius: 8px;
-  z-index: 1; /* Ensure UI is above game board */
+  background-color: var(--surface-color); /* Use surface color for UI panel */
+  border-radius: 12px; /* More rounded corners */
+  z-index: 5; /* Ensure UI is above game board */
   flex-shrink: 0; /* Prevent UI from shrinking */
   width: 250px; /* Fixed width for the UI panel */
-  margin-right: 20px; /* Space between UI and game board */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 15px rgba(177, 74, 237, 0.3); /* Enhanced shadow/glow with new color */
+  border: 1px solid rgba(177, 74, 237, 0.4); /* Subtle border with new color */
+}
+
+/* This container will now be centered regardless of the UI panel */
+.game-board-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1; /* Sit behind the UI panel but above the background */
+  border: 3px solid var(--primary-color); /* Add a border around the game board */
+  border-radius: 12px; /* Match other rounded elements */
+  box-shadow: 0 0 20px rgba(177, 74, 237, 0.6); /* Glowing effect */
+  padding: 5px; /* Inner padding for the border */
+}
+
+/* Container for the new game buttons to add spacing */
+.new-game-actions {
+  display: flex;
+  gap: 10px; /* Add space between buttons */
+}
+
+/* Override Bootstrap button styles for rounded corners and effects */
+.btn {
+  border-radius: 20px !important; /* Rounded buttons */
+  transition: all 0.3s ease; /* Smooth transitions for hover effects */
+  font-weight: bold;
+}
+
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #fff !important; /* White text on primary button */
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark-color) !important;
+  border-color: var(--primary-dark-color) !important;
+  box-shadow: 0 0 15px var(--primary-color); /* Glow on hover */
+}
+
+.btn-secondary {
+  background-color: var(--text-secondary-color) !important;
+  border-color: var(--text-secondary-color) !important;
+  color: var(--background-color) !important;
+}
+
+.btn-secondary:hover {
+  background-color: #808080 !important; /* Darker gray on hover */
+  border-color: #808080 !important;
+}
+
+.btn-info {
+  background-color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+  color: var(--surface-color) !important;
+}
+
+.btn-info:hover {
+  filter: brightness(1.2);
+}
+
+.btn-outline-primary {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color) !important;
+  color: var(--background-color) !important;
+}
+
+.btn-outline-info {
+  color: var(--secondary-color) !important;
+  border-color: var(--secondary-color) !important;
+}
+
+.btn-outline-info:hover {
+  background-color: var(--secondary-color) !important;
+  color: var(--background-color) !important;
+}
+
+.btn-outline-danger {
+  color: var(--error-color) !important;
+  border-color: var(--error-color) !important;
+}
+
+.btn-outline-danger:hover {
+  background-color: var(--error-color) !important;
+  color: var(--background-color) !important;
+}
+
+.btn-success {
+  background-color: #28a745 !important;
+  border-color: #28a745 !important;
+  color: #fff !important;
+}
+
+.btn-success:hover {
+  background-color: #218838 !important;
+  border-color: #1e7e34 !important;
+}
+
+.card {
+  background-color: var(--surface-color) !important;
+  border: 1px solid rgba(177, 74, 237, 0.2) !important; /* Subtle purple border */
+  border-radius: 12px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card-title {
+  color: var(--primary-color) !important;
+  font-weight: bold;
+}
+
+.card-subtitle {
+  color: var(--text-secondary-color) !important;
+}
+
+.card-text {
+  color: var(--text-color) !important;
+}
+
+.form-control, .form-select {
+  background-color: var(--background-color) !important;
+  color: var(--text-color) !important;
+  border-color: rgba(177, 74, 237, 0.4) !important;
+}
+
+.form-control:focus, .form-select:focus {
+  background-color: var(--background-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.25rem rgba(177, 74, 237, 0.25) !important;
+}
+
+.navbar {
+  background-color: var(--surface-color) !important;
+  border-bottom: 1px solid rgba(177, 74, 237, 0.2);
+}
+
+.navbar-brand, .nav-link {
+  color: var(--text-color) !important;
+  font-weight: 500;
+}
+
+.navbar-brand:hover, .nav-link:hover {
+  color: var(--primary-color) !important;
 }
 
 @keyframes flash {
@@ -44,10 +191,10 @@
   animation: flash 0.5s ease-out;
 }
 
-.game-board-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 0; /* Place it behind other UI elements */
+.App-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    width: 100%;
 }
+

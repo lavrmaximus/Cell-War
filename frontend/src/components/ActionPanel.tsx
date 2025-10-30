@@ -19,11 +19,11 @@ const ActionPanel: React.FC<ActionPanelProps> = ({ selectedCell, gameState, onAc
 
     if (!selectedCell) {
         return (
-            <div className="action-panel">
-                <h3>Actions</h3>
-                <p>Select a cell to see available actions.</p>
-                <hr />
-                <button onClick={() => onAction('END_TURN')}>End Turn</button>
+            <div className="action-panel card p-3">
+                <h3 className="card-title">Actions</h3>
+                <p className="card-text">Select a cell to see available actions.</p>
+                <hr className="my-4" />
+                <button className="btn btn-secondary" onClick={() => onAction('END_TURN')}>End Turn</button>
             </div>
         );
     }
@@ -32,36 +32,36 @@ const ActionPanel: React.FC<ActionPanelProps> = ({ selectedCell, gameState, onAc
     const canUpgradeDefense = isOwnCell && !selectedCell.building;
 
     return (
-        <div className="action-panel">
-            <h3>Cell ({selectedCell.x}, {selectedCell.y})</h3>
+        <div className="action-panel card p-3">
+            <h3 className="card-title">Cell ({selectedCell.x}, {selectedCell.y})</h3>
             
             {isOwnCell && !selectedCell.building && (
-                <button onClick={() => onAction('BUILD_FARM')}>Build Farm</button>
+                <button className="btn btn-primary mb-2" onClick={() => onAction('BUILD_FARM')}>Build Farm</button>
             )}
 
             {canUpgradeDefense && (
-                 <div style={{ marginTop: '10px' }}>
+                 <div className="mb-2">
                     <input 
                         type="number" 
                         value={defenseAmount}
                         onChange={handleDefenseAmountChange}
                         min="1"
                         max="9"
-                        style={{ width: '50px', marginRight: '10px' }}
+                        className="form-control d-inline-block w-auto me-2"
                     />
-                    <button onClick={() => onAction('UPGRADE_DEFENSE', { amount: defenseAmount })}>
+                    <button className="btn btn-primary" onClick={() => onAction('UPGRADE_DEFENSE', { amount: defenseAmount })}>
                         Add Defense
                     </button>
                 </div>
             )}
 
             {!isOwnCell && selectedCell.type !== 'mountain' && selectedCell.type !== 'water' && (
-                <button onClick={() => onAction('CAPTURE')}>Capture</button>
+                <button className="btn btn-primary mb-2" onClick={() => onAction('CAPTURE')}>Capture</button>
             )}
             
-            <hr />
-            <button onClick={() => onAction('END_TURN')}>End Turn</button>
-            <div style={{ marginTop: '20px', fontSize: '0.8em', color: '#aaa' }}>
+            <hr className="my-4" />
+            <button className="btn btn-secondary" onClick={() => onAction('END_TURN')}>End Turn</button>
+            <div className="mt-4 text-muted small">
                 <h4>Hotkeys:</h4>
                 <p>Q: Capture</p>
                 <p>W: Build Farm</p>
