@@ -29,14 +29,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      // Try to get token if available, otherwise rely on cookies
-      gameSocket.connect((user as any).token || '');
-    } else {
-      gameSocket.disconnect();
-    }
-  }, [user]);
 
   // Polling effect
   useEffect(() => {

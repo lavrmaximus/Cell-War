@@ -1,11 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { gameSocket } from '../services/socket';
+import { useAuth } from '../context/AuthContext';
 import type { GameState, MoveAction } from '../types';
 
 export const useGameState = () => {
     const [gameState, setGameState] = useState<GameState | null>(null);
     const [isConnected, setIsConnected] = useState(gameSocket.socket?.connected || false);
     const [error, setError] = useState<string | null>(null);
+    const { user } = useAuth();
+
+    useEffect(() => {
+        const token = (user as any)?.token;
+        if (token) {
+            gameSocket.connect(token);
+        } else {
+            gameSocket.disconnect();
+        }
+    }, [user]);
 
     useEffect(() => {
         const onConnect = () => setIsConnected(true);
@@ -39,10 +50,10 @@ export const useGameState = () => {
                 gameSocket.off('error', onError);
             }
         };
-    }, []);
+    }, [user]); // Re-run if user changes (and thus socket might reconnect)
 
     const joinGame = useCallback(() => {
-        gameSocket.emit('FIND_MATCH');
+        gameSocket.joinQueue();
     }, []);
 
     const setReady = useCallback((ready: boolean) => {

@@ -17,15 +17,14 @@ class GameSocketService {
     }
 
     public connect(token: string) {
-        console.log('Connecting to socket...', URL, token);
+        console.log('Connecting to socket...', URL);
         if (this.socket?.connected) return;
 
         this.socket = io(URL, {
             auth: {
-                token
+                token: `Bearer ${token}`
             },
             transports: ['websocket'],
-            autoConnect: true,
             withCredentials: true
         });
 
@@ -38,7 +37,7 @@ class GameSocketService {
         });
 
         this.socket.on('connect_error', (err) => {
-            console.error('Connection error:', err);
+            console.error("SOCKET ERROR DETAILS:", err.message);
         });
     }
 
@@ -47,6 +46,18 @@ class GameSocketService {
             this.socket.disconnect();
             this.socket = null;
         }
+    }
+
+    public joinQueue() {
+        this.emit('FIND_MATCH');
+    }
+
+    public debugStart() {
+        this.emit('DEBUG_START');
+    }
+
+    public getRooms() {
+        this.emit('GET_ROOMS');
     }
 
     public emit<T extends keyof ClientToServerEvents>(event: T, ...args: Parameters<ClientToServerEvents[T]>) {

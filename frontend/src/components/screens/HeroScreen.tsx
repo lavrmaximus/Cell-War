@@ -28,7 +28,7 @@ const HeroScreen: React.FC<HeroScreenProps> = ({ onNavigate }) => {
   if (user?.role === 'admin') {
     menuItems.push({
       label: '🛠 DEBUG SIMULATION',
-      action: () => gameSocket.emit('DEBUG_START'),
+      action: () => gameSocket.debugStart(),
       disabled: false
     });
   }

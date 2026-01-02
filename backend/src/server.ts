@@ -20,18 +20,13 @@ const server = http.createServer(app);
 
 // CORS configuration
 const corsOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-  if (!origin) return callback(null, true); // Allow requests with no origin (like mobile apps or curl requests)
-
-  if (origin.endsWith('.lvrnvm.fun') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-    return callback(null, true);
-  }
-
-  callback(new Error('Not allowed by CORS'));
+  // Allow all origins to resolve CORS issues
+  callback(null, true);
 };
 
 // Middleware
 app.use(cors({
-  origin: corsOrigin,
+  origin: corsOrigin, // Using function to allow all while supporting credentials
   credentials: true
 }));
 app.use(express.json());
