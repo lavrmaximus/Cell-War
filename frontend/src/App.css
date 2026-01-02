@@ -1,200 +1,42 @@
-.App {
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  min-height: 100vh; /* Ensure App takes full viewport height */
-  background-color: transparent; /* Ensure App doesn't hide background */
-  position: relative; /* Set as positioning context for children */
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 }
 
-
-
-.App-header h1 {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10; /* Ensure title is above everything */
-  font-size: 3.5em; /* Large font size */
-  font-weight: bold; /* Make it bold */
-  color: #fff; /* White color for title */
-  text-shadow: 0 0 10px #fff, 0 0 20px #fff; /* White glowing effect */
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.game-ui-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 20px;
-  background-color: var(--surface-color); /* Use surface color for UI panel */
-  border-radius: 12px; /* More rounded corners */
-  z-index: 5; /* Ensure UI is above game board */
-  flex-shrink: 0; /* Prevent UI from shrinking */
-  width: 250px; /* Fixed width for the UI panel */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), 0 0 15px rgba(177, 74, 237, 0.3); /* Enhanced shadow/glow with new color */
-  border: 1px solid rgba(177, 74, 237, 0.4); /* Subtle border with new color */
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* This container will now be centered regardless of the UI panel */
-.game-board-container {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1; /* Sit behind the UI panel but above the background */
-  border: 3px solid var(--primary-color); /* Add a border around the game board */
-  border-radius: 12px; /* Match other rounded elements */
-  box-shadow: 0 0 20px rgba(177, 74, 237, 0.6); /* Glowing effect */
-  padding: 5px; /* Inner padding for the border */
-}
-
-/* Container for the new game buttons to add spacing */
-.new-game-actions {
-  display: flex;
-  gap: 10px; /* Add space between buttons */
-}
-
-/* Override Bootstrap button styles for rounded corners and effects */
-.btn {
-  border-radius: 20px !important; /* Rounded buttons */
-  transition: all 0.3s ease; /* Smooth transitions for hover effects */
-  font-weight: bold;
-}
-
-.btn-primary {
-  background-color: var(--primary-color) !important;
-  border-color: var(--primary-color) !important;
-  color: #fff !important; /* White text on primary button */
-}
-
-.btn-primary:hover {
-  background-color: var(--primary-dark-color) !important;
-  border-color: var(--primary-dark-color) !important;
-  box-shadow: 0 0 15px var(--primary-color); /* Glow on hover */
-}
-
-.btn-secondary {
-  background-color: var(--text-secondary-color) !important;
-  border-color: var(--text-secondary-color) !important;
-  color: var(--background-color) !important;
-}
-
-.btn-secondary:hover {
-  background-color: #808080 !important; /* Darker gray on hover */
-  border-color: #808080 !important;
-}
-
-.btn-info {
-  background-color: var(--secondary-color) !important;
-  border-color: var(--secondary-color) !important;
-  color: var(--surface-color) !important;
-}
-
-.btn-info:hover {
-  filter: brightness(1.2);
-}
-
-.btn-outline-primary {
-  color: var(--primary-color) !important;
-  border-color: var(--primary-color) !important;
-}
-
-.btn-outline-primary:hover {
-  background-color: var(--primary-color) !important;
-  color: var(--background-color) !important;
-}
-
-.btn-outline-info {
-  color: var(--secondary-color) !important;
-  border-color: var(--secondary-color) !important;
-}
-
-.btn-outline-info:hover {
-  background-color: var(--secondary-color) !important;
-  color: var(--background-color) !important;
-}
-
-.btn-outline-danger {
-  color: var(--error-color) !important;
-  border-color: var(--error-color) !important;
-}
-
-.btn-outline-danger:hover {
-  background-color: var(--error-color) !important;
-  color: var(--background-color) !important;
-}
-
-.btn-success {
-  background-color: #28a745 !important;
-  border-color: #28a745 !important;
-  color: #fff !important;
-}
-
-.btn-success:hover {
-  background-color: #218838 !important;
-  border-color: #1e7e34 !important;
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
 }
 
 .card {
-  background-color: var(--surface-color) !important;
-  border: 1px solid rgba(177, 74, 237, 0.2) !important; /* Subtle purple border */
-  border-radius: 12px !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  padding: 2em;
 }
 
-.card-title {
-  color: var(--primary-color) !important;
-  font-weight: bold;
+.read-the-docs {
+  color: #888;
 }
-
-.card-subtitle {
-  color: var(--text-secondary-color) !important;
-}
-
-.card-text {
-  color: var(--text-color) !important;
-}
-
-.form-control, .form-select {
-  background-color: var(--background-color) !important;
-  color: var(--text-color) !important;
-  border-color: rgba(177, 74, 237, 0.4) !important;
-}
-
-.form-control:focus, .form-select:focus {
-  background-color: var(--background-color) !important;
-  color: var(--text-color) !important;
-  border-color: var(--primary-color) !important;
-  box-shadow: 0 0 0 0.25rem rgba(177, 74, 237, 0.25) !important;
-}
-
-.navbar {
-  background-color: var(--surface-color) !important;
-  border-bottom: 1px solid rgba(177, 74, 237, 0.2);
-}
-
-.navbar-brand, .nav-link {
-  color: var(--text-color) !important;
-  font-weight: 500;
-}
-
-.navbar-brand:hover, .nav-link:hover {
-  color: var(--primary-color) !important;
-}
-
-@keyframes flash {
-  0% { box-shadow: 0 0 5px 5px yellow; }
-  100% { box-shadow: none; }
-}
-
-.cell-captured {
-  animation: flash 0.5s ease-out;
-}
-
-.App-header {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    width: 100%;
-}
-

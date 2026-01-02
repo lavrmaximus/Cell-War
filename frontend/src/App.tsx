@@ -1,233 +1,79 @@
-import React, { useState, useEffect, ChangeEvent, useCallback } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
-import './App.css';
-import GameBoard from './components/GameBoard.tsx';
-import PlayerPanel from './components/PlayerPanel.tsx';
-import ActionPanel from './components/ActionPanel.tsx';
-import MapEditor from './components/MapEditor.tsx';
-// import BackgroundParticles from './components/BackgroundParticles.tsx'; // Removed import
-import { GameState, Cell } from './types/game.ts';
-import { playSound } from './utils/sounds.ts';
+import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { AuthProvider } from './context/AuthContext';
+import GameHUD from './components/layout/GameHUD';
+import HeroScreen from './components/screens/HeroScreen';
+import LobbyBrowser from './components/screens/LobbyBrowser';
+import GameArena from './components/game/GameArena';
+import { useGameState } from './hooks/useGameState';
 
-const API_URL = 'http://localhost:5000';
+function AppContent() {
+  const [view, setView] = useState<'hero' | 'lobby' | 'game'>('hero');
+  const { gameState } = useGameState();
 
-function App() {
+  useEffect(() => {
+    if (gameState) {
+      setView('game');
+    } else if (view === 'game') {
+      // If game ends or state is cleared, go back to hero
+      setView('hero');
+    }
+  }, [gameState]);
+
   return (
-    <div className="App">
-      {/* <BackgroundParticles /> Removed rendering */}
-      <nav className="navbar navbar-expand-lg navbar-light mb-4">
-        <div className="container-fluid">
-          <Link className="navbar-brand" to="/">Cell War</Link>
-          <div className="collapse navbar-collapse">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-              <li className="nav-item">
-                <Link className="nav-link" to="/">Game</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" to="/editor">Map Editor</Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
-      <Routes>
-        <Route path="/" element={<Game />} />
-        <Route path="/editor" element={<MapEditor />} />
-      </Routes>
-    </div>
+      <div className="min-h-screen w-full bg-[#050505] text-white overflow-hidden font-sans">
+        <GameHUD />
+        
+        <AnimatePresence mode="wait">
+          {view === 'hero' && (
+            <motion.div
+              key="hero"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0"
+            >
+              <HeroScreen onNavigate={(screen) => setView(screen as any)} />
+            </motion.div>
+          )}
+          
+          {view === 'lobby' && (
+            <motion.div
+              key="lobby"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0"
+            >
+              <LobbyBrowser onBack={() => setView('hero')} />
+            </motion.div>
+          )}
+
+          {view === 'game' && (
+            <motion.div
+              key="game"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              <GameArena />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
   );
 }
 
-const Game: React.FC = () => {
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const [selectedCell, setSelectedCell] = useState<Cell | null>(null);
-  const [mapType, setMapType] = useState('standard');
-  const [customMap, setCustomMap] = useState<Cell[][] | null>(null);
-
-  const handleMapFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const mapData = JSON.parse(event.target?.result as string);
-          setCustomMap(mapData);
-          setMapType('custom');
-        } catch (error) {
-          console.error("Error parsing map file:", error);
-          alert("Invalid map file.");
-        }
-      };
-      reader.readAsText(file);
-    }
-  };
-
-  const createNewGame = async () => {
-    try {
-      let body: any = { type: mapType };
-      if (mapType === 'custom' && customMap) {
-        body.data = customMap;
-      }
-
-      const response = await fetch(`${API_URL}/api/game`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
-        throw new Error(`Server error: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
-      }
-
-      const data = await response.json();
-      setGameState(data);
-      setSelectedCell(null);
-      playSound('start.mp3');
-    } catch (e) {
-      const error = e as Error;
-      console.error('Failed to create new game:', error);
-      alert(`Could not start new game: ${error.message}`);
-    }
-  };
-
-  const saveGame = () => {
-    if (gameState) {
-      localStorage.setItem('cellWarSaveData', JSON.stringify(gameState));
-      playSound('save.mp3');
-      alert('Game Saved!');
-    }
-  };
-
-  const loadGame = () => {
-    const savedData = localStorage.getItem('cellWarSaveData');
-    if (savedData) {
-      setGameState(JSON.parse(savedData));
-      setSelectedCell(null);
-      playSound('load.mp3');
-    }
-  };
-
-  const handleAction = useCallback(async (actionType: string, options?: { amount?: number }) => {
-    if (!gameState || (!selectedCell && actionType !== 'END_TURN')) return;
-
-    // Prevent action if gameId is missing
-    if (!gameState.gameId) {
-      alert("Error: Game ID is missing. Cannot perform action.");
-      return;
-    }
-
-    let url = '';
-    let body: any = {};
-
-    if (actionType === 'END_TURN') {
-      url = `${API_URL}/api/game/${gameState.gameId}/end_turn`;
-      playSound('end_turn.mp3');
-    } else {
-      url = `${API_URL}/api/game/${gameState.gameId}/action`;
-      body = {
-        type: actionType,
-        playerId: gameState.currentPlayerId,
-        cell: { x: selectedCell!.x, y: selectedCell!.y },
-      };
-      if (actionType === 'UPGRADE_DEFENSE' && options?.amount) {
-        body.amount = options.amount;
-      }
-      if (actionType === 'CAPTURE') playSound('capture.mp3');
-      if (actionType === 'BUILD_FARM') playSound('build.mp3');
-    }
-
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: Object.keys(body).length > 0 ? JSON.stringify(body) : null,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred.' }));
-        throw new Error(`Server error: ${response.status} ${response.statusText}. ${errorData.message || ''}`);
-      }
-
-      const updatedGame = await response.json();
-      setGameState(updatedGame);
-      setSelectedCell(null); // Deselect cell after action
-    } catch (e) {
-      const error = e as Error;
-      console.error('Failed to perform action:', error);
-      alert(`Action failed: ${error.message}`);
-    }
-  }, [gameState, selectedCell, setGameState, setSelectedCell]);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!gameState) return; // Hotkeys only active when game is in progress
-
-      switch (event.key.toUpperCase()) {
-        case 'Q':
-          if (selectedCell) handleAction('CAPTURE');
-          break;
-        case 'W':
-          if (selectedCell) handleAction('BUILD_FARM');
-          break;
-        case 'E':
-          if (selectedCell) handleAction('UPGRADE_DEFENSE');
-          break;
-        case 'R':
-          handleAction('END_TURN');
-          break;
-        default:
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [gameState, selectedCell, handleAction]);
-
-  const handleCellClick = (cell: Cell) => {
-    setSelectedCell(cell);
-    playSound('click.mp3');
-  };
-
+function App() {
   return (
-            <header className="App-header">
-              <h1 className="display-4 mb-4">Cell War</h1>
-              {!gameState ? (
-                <div className="card p-3">
-                  <h3 className="card-title">New Game Options</h3>
-                  <select className="form-select mb-3" value={mapType} onChange={(e) => setMapType(e.target.value)}>
-                    <option value="standard">Standard (20x20)</option>
-                    <option value="large">Large (30x30)</option>
-                    <option value="empty">Empty</option>
-                    <option value="custom" disabled={!customMap}>Custom Map</option>
-                  </select>
-                  <div className="mb-3">
-                    <label htmlFor="customMapFile" className="form-label">Load Custom Map: </label>
-                    <input id="customMapFile" type="file" accept=".json" className="form-control" onChange={handleMapFileChange} />
-                  </div>
-                  <hr className="my-4" />
-                  <div className="new-game-actions">
-                    <button className="btn btn-primary" onClick={createNewGame}>Start New Game</button>
-                    <button className="btn btn-secondary" onClick={loadGame}>Load Game</button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <main className="game-ui-panel">
-                    <PlayerPanel gameState={gameState} />
-                    <ActionPanel selectedCell={selectedCell} gameState={gameState} onAction={handleAction} />
-                    <hr className="my-4" />
-                    <button className="btn btn-info" onClick={saveGame}>Save Game</button>
-                  </main>
-                  <div className="game-board-container">
-                    <GameBoard gameState={gameState} selectedCell={selectedCell} onCellClick={handleCellClick} />
-                  </div>
-                </>
-              )}
-            </header>  );
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;
