@@ -18,8 +18,22 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const server = http.createServer(app);
 
+// CORS configuration
+const corsOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+  if (!origin) return callback(null, true); // Allow requests with no origin (like mobile apps or curl requests)
+
+  if (origin.endsWith('.lvrnvm.fun') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+    return callback(null, true);
+  }
+
+  callback(new Error('Not allowed by CORS'));
+};
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: corsOrigin,
+  credentials: true
+}));
 app.use(express.json());
 
 // Serve static files from the frontend
@@ -28,7 +42,7 @@ app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 // Socket.io setup
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: corsOrigin,
     methods: ["GET", "POST"],
     credentials: true
   }
