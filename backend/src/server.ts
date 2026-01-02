@@ -19,16 +19,27 @@ const app = express();
 const server = http.createServer(app);
 
 // CORS configuration
-const corsOrigin = (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-  // Allow all origins to resolve CORS issues
-  callback(null, true);
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://cellwar.lvrnvm.fun',
+  'https://www.lvrnvm.fun'
+];
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin) || origin.endsWith('.lvrnvm.fun')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 };
 
 // Middleware
-app.use(cors({
-  origin: corsOrigin, // Using function to allow all while supporting credentials
-  credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve static files from the frontend
@@ -36,11 +47,7 @@ app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 // Socket.io setup
 const io = new Server(server, {
-  cors: {
-    origin: corsOrigin,
-    methods: ["GET", "POST"],
-    credentials: true
-  }
+  cors: corsOptions
 });
 
 // Apply auth middleware to Socket.io

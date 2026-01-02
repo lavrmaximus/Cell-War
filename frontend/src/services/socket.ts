@@ -36,8 +36,8 @@ class GameSocketService {
             console.log('Disconnected from game server');
         });
 
-        this.socket.on('connect_error', (err) => {
-            console.error("SOCKET ERROR DETAILS:", err.message);
+        this.socket.on("connect_error", (err) => {
+          console.error("SOCKET CONNECT ERROR:", err.message);
         });
     }
 
