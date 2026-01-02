@@ -16,14 +16,14 @@ class GameSocketService {
         return GameSocketService.instance;
     }
 
-    public connect(token: string) {
+    public connect(token?: string) {
         console.log('Connecting to socket...', URL);
         if (this.socket?.connected) return;
 
+        const auth = token ? { token: `Bearer ${token}` } : undefined;
+
         this.socket = io(URL, {
-            auth: {
-                token: `Bearer ${token}`
-            },
+            auth,
             transports: ['websocket'],
             withCredentials: true
         });

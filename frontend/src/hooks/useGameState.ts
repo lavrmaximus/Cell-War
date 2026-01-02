@@ -10,9 +10,8 @@ export const useGameState = () => {
     const { user } = useAuth();
 
     useEffect(() => {
-        const token = (user as any)?.token;
-        if (token) {
-            gameSocket.connect(token);
+        if (user) {
+            gameSocket.connect();
         } else {
             gameSocket.disconnect();
         }
