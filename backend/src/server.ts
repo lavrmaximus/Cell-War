@@ -51,7 +51,7 @@ const io = new Server(server, {
 // Apply auth middleware to Socket.io
 io.use(authMiddleware);
 
-const gameManager = new GameManager();
+const gameManager = new GameManager(io);
 
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}, UserID: ${socket.data.user?.userId}`);

@@ -44,12 +44,15 @@ export interface ServerToClientEvents {
     game_state: (state: GameState) => void;
     error: (message: string) => void;
     joined_room: (roomId: string) => void;
+    GAME_START: (data: { roomId: string, state: any }) => void;
+    ROOM_LIST: (rooms: any[]) => void;
 }
 
 export interface ClientToServerEvents {
-    join_game: () => void; // Request matchmaking
+    FIND_MATCH: () => void;
     set_ready: (ready: boolean) => void;
     make_move: (action: MoveAction) => void;
     DEBUG_START: () => void;
     leave_game: () => void;
+    GET_ROOMS: () => void;
 }

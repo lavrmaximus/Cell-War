@@ -17,6 +17,7 @@ class GameSocketService {
     }
 
     public connect(token: string) {
+        console.log('Connecting to socket...', URL, token);
         if (this.socket?.connected) return;
 
         this.socket = io(URL, {
@@ -24,7 +25,8 @@ class GameSocketService {
                 token
             },
             transports: ['websocket'],
-            autoConnect: true
+            autoConnect: true,
+            withCredentials: true
         });
 
         this.socket.on('connect', () => {

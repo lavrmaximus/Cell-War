@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import api from '../services/api';
+import { gameSocket } from '../services/socket';
 
 export interface User {
   id: string;
@@ -27,6 +28,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      // Try to get token if available, otherwise rely on cookies
+      gameSocket.connect((user as any).token || '');
+    } else {
+      gameSocket.disconnect();
+    }
+  }, [user]);
 
   // Polling effect
   useEffect(() => {

@@ -1,18 +1,60 @@
 import { Room } from './Room';
 import { v4 as uuidv4 } from 'uuid';
-import { Socket } from 'socket.io';
+import { Socket, Server } from 'socket.io';
 import { isAdmin } from '../middleware/auth';
 
 export class GameManager {
     private rooms: Map<string, Room>;
+    private io: Server;
 
-    constructor() {
+    constructor(io: Server) {
         this.rooms = new Map();
+        this.io = io;
     }
 
     handleConnection(socket: Socket) {
         socket.on('DEBUG_START', () => {
             this.createDebugMatch(socket);
+        });
+
+        socket.on('FIND_MATCH', () => {
+            const userId = socket.data.user.userId;
+            console.log('User joined queue', userId);
+            
+            const roomId = this.findMatch(userId);
+            socket.join(roomId);
+            
+            const room = this.rooms.get(roomId);
+            if (room && room.players.size === 2) {
+                // Auto-start for now
+                room.setPlayerReady(Array.from(room.players.keys())[0], true);
+                room.setPlayerReady(Array.from(room.players.keys())[1], true);
+                
+                if (room.status === 'playing') {
+                    this.io.to(roomId).emit('GAME_START', {
+                        roomId,
+                        state: {
+                            grid: room.grid,
+                            players: Array.from(room.players.values()),
+                            turn: room.turn
+                        }
+                    });
+                }
+            } else {
+                socket.emit('joined_room', roomId);
+            }
+        });
+
+        socket.on('GET_ROOMS', () => {
+            const rooms = Array.from(this.rooms.values()).map(r => ({
+                id: r.id,
+                host: Array.from(r.players.values())[0]?.id || 'Unknown',
+                map: 'Standard',
+                players: `${r.players.size}/2`,
+                status: r.status.toUpperCase(),
+                latency: Math.floor(Math.random() * 50) + 10
+            }));
+            socket.emit('ROOM_LIST', rooms);
         });
     }
 
@@ -42,7 +84,7 @@ export class GameManager {
             
             // If the game started, we might want to emit game state
             if (room.status === 'playing') {
-                socket.emit('game_start', {
+                socket.emit('GAME_START', {
                     roomId,
                     state: {
                         grid: room.grid,

@@ -22,7 +22,7 @@ const HeroScreen: React.FC<HeroScreenProps> = ({ onNavigate }) => {
   const menuItems = [
     { label: isSearching ? 'SEARCHING...' : 'QUICK MATCH', action: handleQuickMatch, disabled: isSearching },
     { label: 'SERVER BROWSER', action: () => onNavigate('lobby'), disabled: isSearching },
-    { label: 'TRAINING', action: () => console.log('Training'), disabled: isSearching },
+    // { label: 'TRAINING', action: () => console.log('Training'), disabled: isSearching },
   ];
 
   if (user?.role === 'admin') {

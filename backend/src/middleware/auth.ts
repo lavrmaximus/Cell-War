@@ -14,7 +14,18 @@ export const isAdmin = (socket: Socket): boolean => {
 };
 
 export const authMiddleware = (socket: Socket, next: (err?: Error) => void) => {
-  const token = socket.handshake.auth.token || socket.handshake.query.token;
+  let token = socket.handshake.auth.token || socket.handshake.query.token;
+
+  if (!token && socket.request.headers.cookie) {
+    const cookies = socket.request.headers.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'token' || name === 'jwt') {
+        token = value;
+        break;
+      }
+    }
+  }
 
   if (!token) {
     return next(new Error("Authentication error: No token provided"));

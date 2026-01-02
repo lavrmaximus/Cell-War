@@ -14,6 +14,11 @@ export const useGameState = () => {
             setGameState(state);
             setError(null);
         };
+        const onGameStart = (data: { roomId: string, state: any }) => {
+            console.log('Game started:', data);
+            setGameState(data.state);
+            setError(null);
+        };
         const onError = (msg: string) => setError(msg);
 
         // Check if socket is initialized
@@ -21,6 +26,7 @@ export const useGameState = () => {
             gameSocket.socket.on('connect', onConnect);
             gameSocket.socket.on('disconnect', onDisconnect);
             gameSocket.on('game_state', onGameState);
+            gameSocket.on('GAME_START', onGameStart);
             gameSocket.on('error', onError);
         }
 
@@ -29,13 +35,14 @@ export const useGameState = () => {
                 gameSocket.socket.off('connect', onConnect);
                 gameSocket.socket.off('disconnect', onDisconnect);
                 gameSocket.off('game_state', onGameState);
+                gameSocket.off('GAME_START', onGameStart);
                 gameSocket.off('error', onError);
             }
         };
     }, []);
 
     const joinGame = useCallback(() => {
-        gameSocket.emit('join_game');
+        gameSocket.emit('FIND_MATCH');
     }, []);
 
     const setReady = useCallback((ready: boolean) => {

@@ -4,6 +4,7 @@ import NeonButton from '../ui/NeonButton';
 import { ArrowLeft, Server, Shield, Users, Activity, Trophy } from 'lucide-react';
 import { getLeaderboard } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
+import { gameSocket } from '../../services/socket';
 
 interface LobbyBrowserProps {
   onBack: () => void;
@@ -18,21 +19,25 @@ interface ServerNode {
   latency: number;
 }
 
-const mockServers: ServerNode[] = [
-  { id: '1', host: 'NEO_TOKYO_01', map: 'Small (32x32)', players: '2/4', status: 'WAITING', latency: 24 },
-  { id: '2', host: 'CYBER_NET_V2', map: 'Medium (64x64)', players: '1/6', status: 'WAITING', latency: 45 },
-  { id: '3', host: 'DARK_MATTER', map: 'Large (128x128)', players: '8/8', status: 'IN_PROGRESS', latency: 12 },
-  { id: '4', host: 'GHOST_SHELL', map: 'Small (32x32)', players: '3/4', status: 'WAITING', latency: 89 },
-  { id: '5', host: 'SYSTEM_SHOCK', map: 'Medium (64x64)', players: '5/6', status: 'WAITING', latency: 33 },
-  { id: '6', host: 'BLADE_RUNNER', map: 'Large (128x128)', players: '4/8', status: 'IN_PROGRESS', latency: 56 },
-];
-
 const LobbyBrowser: React.FC<LobbyBrowserProps> = ({ onBack }) => {
   const { user } = useAuth();
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [servers, setServers] = useState<ServerNode[]>([]);
 
   useEffect(() => {
     getLeaderboard().then(setLeaderboard);
+
+    gameSocket.emit('GET_ROOMS');
+    
+    const onRoomList = (rooms: any[]) => {
+        setServers(rooms);
+    };
+    
+    gameSocket.on('ROOM_LIST', onRoomList);
+    
+    return () => {
+        gameSocket.off('ROOM_LIST', onRoomList);
+    };
   }, []);
 
   return (
@@ -73,33 +78,39 @@ const LobbyBrowser: React.FC<LobbyBrowserProps> = ({ onBack }) => {
             </div>
 
             <div className="flex flex-col">
-              {mockServers.map((server, index) => (
-                <motion.div
-                  key={server.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="grid grid-cols-12 gap-4 p-4 border-b border-cyan-900/10 hover:bg-cyan-900/10 transition-colors cursor-pointer group font-mono text-gray-300"
-                >
-                  <div className="col-span-4 font-bold text-white group-hover:text-cyan-400 transition-colors">
-                    {server.host}
-                  </div>
-                  <div className="col-span-3">{server.map}</div>
-                  <div className="col-span-2">{server.players}</div>
-                  <div className="col-span-2">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      server.status === 'WAITING' ? 'bg-green-900/50 text-green-400' : 'bg-yellow-900/50 text-yellow-400'
+              {servers.length === 0 ? (
+                <div className="p-8 text-center text-cyan-700 font-mono">
+                  No active signals detected in local sector.
+                </div>
+              ) : (
+                servers.map((server, index) => (
+                  <motion.div
+                    key={server.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="grid grid-cols-12 gap-4 p-4 border-b border-cyan-900/10 hover:bg-cyan-900/10 transition-colors cursor-pointer group font-mono text-gray-300"
+                  >
+                    <div className="col-span-4 font-bold text-white group-hover:text-cyan-400 transition-colors">
+                      {server.host}
+                    </div>
+                    <div className="col-span-3">{server.map}</div>
+                    <div className="col-span-2">{server.players}</div>
+                    <div className="col-span-2">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        server.status === 'WAITING' ? 'bg-green-900/50 text-green-400' : 'bg-yellow-900/50 text-yellow-400'
+                      }`}>
+                        {server.status}
+                      </span>
+                    </div>
+                    <div className={`col-span-1 text-right ${
+                      server.latency < 50 ? 'text-green-500' : server.latency < 100 ? 'text-yellow-500' : 'text-red-500'
                     }`}>
-                      {server.status}
-                    </span>
-                  </div>
-                  <div className={`col-span-1 text-right ${
-                    server.latency < 50 ? 'text-green-500' : server.latency < 100 ? 'text-yellow-500' : 'text-red-500'
-                  }`}>
-                    {server.latency}ms
-                  </div>
-                </motion.div>
-              ))}
+                      {server.latency}ms
+                    </div>
+                  </motion.div>
+                ))
+              )}
             </div>
           </div>
 
