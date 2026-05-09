@@ -6,7 +6,7 @@ export interface Cell {
     x: number;
     y: number;
     type: CellType;
-    owner: string | null; // userId
+    owner: string | null;
     structure: StructureType;
     defense: number;
 }
@@ -16,7 +16,7 @@ export interface Player {
     color: string;
     gold: number;
     ready: boolean;
-    farms: number; // Track number of farms for cost calculation
+    farms: number;
 }
 
 export type MoveType = 'capture' | 'build_farm' | 'defend';
@@ -25,14 +25,25 @@ export interface MoveAction {
     type: MoveType;
     x: number;
     y: number;
-    amount?: number; // For defend
+    amount?: number;
+}
+
+export interface SerializedRoom {
+    id: string;
+    players: Record<string, Player>;
+    grid: Cell[][];
+    turn: string | null;
+    status: RoomStatus;
+    width: number;
+    height: number;
+    playerOrder: string[];
 }
 
 export class Room {
     id: string;
     players: Map<string, Player>;
     grid: Cell[][];
-    turn: string | null; // current player userId
+    turn: string | null;
     status: RoomStatus;
     width: number = 20;
     height: number = 20;
@@ -53,36 +64,26 @@ export class Room {
         for (let y = 0; y < this.height; y++) {
             const row: Cell[] = [];
             for (let x = 0; x < this.width; x++) {
-                // Simple map generation: mostly grass, some random features
                 let type: CellType = 'grass';
                 const rand = Math.random();
-                if (rand > 0.9) type = 'mountain';
-                else if (rand > 0.85) type = 'water';
-                else if (rand > 0.8) type = 'hill';
+                if (rand > 0.92) type = 'mountain';
+                else if (rand > 0.88) type = 'water';
+                else if (rand > 0.82) type = 'hill';
 
-                row.push({
-                    x,
-                    y,
-                    type,
-                    owner: null,
-                    structure: null,
-                    defense: 0
-                });
+                row.push({ x, y, type, owner: null, structure: null, defense: 0 });
             }
             this.grid.push(row);
         }
     }
 
     addPlayer(userId: string): boolean {
-        if (this.players.size >= 2) return false; // Max 2 players for now
+        if (this.players.size >= 2) return false;
         if (this.players.has(userId)) return true;
 
-        const colors = ['#FF0000', '#0000FF'];
-        const color = colors[this.players.size];
-
+        const colors = ['#22d3ee', '#f43f5e'];
         this.players.set(userId, {
             id: userId,
-            color,
+            color: colors[this.players.size],
             gold: 0,
             ready: false,
             farms: 0
@@ -109,29 +110,23 @@ export class Room {
         this.status = 'playing';
         this.turn = this.playerOrder[0];
 
-        // Initialize players
         this.players.forEach(p => {
             p.gold = 10;
             p.farms = 0;
         });
 
-        // Assign starting territories (3x3)
-        // Player 1: Top-Left (2,2 center)
         this.assignStartTerritory(this.playerOrder[0], 2, 2);
-
-        // Player 2: Bottom-Right (width-3, height-3 center)
         this.assignStartTerritory(this.playerOrder[1], this.width - 3, this.height - 3);
     }
 
     private assignStartTerritory(userId: string, centerX: number, centerY: number) {
-        for (let y = centerY - 1; y <= centerY + 1; y++) {
-            for (let x = centerX - 1; x <= centerX + 1; x++) {
+        for (let dy = -1; dy <= 1; dy++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const x = centerX + dx;
+                const y = centerY + dy;
                 if (this.isValidCell(x, y)) {
                     const cell = this.grid[y][x];
-                    // Force cell to be habitable for start
-                    if (cell.type === 'water' || cell.type === 'mountain') {
-                        cell.type = 'grass';
-                    }
+                    if (cell.type === 'water' || cell.type === 'mountain') cell.type = 'grass';
                     cell.owner = userId;
                 }
             }
@@ -151,46 +146,33 @@ export class Room {
         const cell = this.grid[y][x];
 
         switch (move.type) {
-            case 'capture':
-                return this.handleCapture(player, cell);
-            case 'build_farm':
-                return this.handleBuildFarm(player, cell);
-            case 'defend':
-                return this.handleDefend(player, cell, move.amount || 0);
-            default:
-                return { success: false, message: 'Unknown move type' };
+            case 'capture': return this.handleCapture(player, cell);
+            case 'build_farm': return this.handleBuildFarm(player, cell);
+            case 'defend': return this.handleDefend(player, cell, move.amount ?? 1);
+            default: return { success: false, message: 'Unknown move type' };
         }
     }
 
     private handleCapture(player: Player, cell: Cell): { success: boolean; message?: string } {
         if (cell.owner === player.id) return { success: false, message: 'Already owned' };
         if (cell.type === 'water' || cell.type === 'mountain') return { success: false, message: 'Cannot capture this terrain' };
-
-        // Check adjacency
         if (!this.isAdjacentToTerritory(player.id, cell.x, cell.y)) {
             return { success: false, message: 'Must be adjacent to your territory' };
         }
 
         let cost = 1;
-        if (cell.owner && cell.owner !== player.id) {
-            cost = cell.defense + 1;
-        }
-        if (cell.type === 'hill') {
-            cost += 1;
-        }
+        if (cell.owner && cell.owner !== player.id) cost = cell.defense + 1;
+        if (cell.type === 'hill') cost += 1;
 
-        if (player.gold < cost) return { success: false, message: 'Not enough gold' };
+        if (player.gold < cost) return { success: false, message: `Not enough gold (need ${cost}g)` };
 
         player.gold -= cost;
-        
-        // If capturing enemy territory, remove their farm/defense
+
         if (cell.owner && cell.owner !== player.id) {
-             const enemy = this.players.get(cell.owner);
-             if (enemy && cell.structure === 'farm') {
-                 enemy.farms = Math.max(0, enemy.farms - 1);
-             }
-             cell.structure = null;
-             cell.defense = 0;
+            const enemy = this.players.get(cell.owner);
+            if (enemy && cell.structure === 'farm') enemy.farms = Math.max(0, enemy.farms - 1);
+            cell.structure = null;
+            cell.defense = 0;
         }
 
         cell.owner = player.id;
@@ -198,33 +180,27 @@ export class Room {
     }
 
     private handleBuildFarm(player: Player, cell: Cell): { success: boolean; message?: string } {
-        if (cell.owner !== player.id) return { success: false, message: 'Must own territory' };
-        if (cell.structure) return { success: false, message: 'Structure already exists' };
-        
-        // Cost calculation based on total farms
-        // 1-10: 1g, 11-20: 2g, etc.
-        // Formula: Math.floor((currentFarms) / 10) + 1
-        const cost = Math.floor(player.farms / 10) + 1;
+        if (cell.owner !== player.id) return { success: false, message: 'Must own this cell' };
+        if (cell.structure) return { success: false, message: 'Cell already has a structure' };
+        if (cell.type === 'water' || cell.type === 'mountain') return { success: false, message: 'Cannot build here' };
 
-        if (player.gold < cost) return { success: false, message: `Not enough gold. Cost: ${cost}` };
+        const cost = Math.floor(player.farms / 10) + 1;
+        if (player.gold < cost) return { success: false, message: `Not enough gold (need ${cost}g)` };
 
         player.gold -= cost;
         cell.structure = 'farm';
         player.farms += 1;
-
         return { success: true };
     }
 
     private handleDefend(player: Player, cell: Cell, amount: number): { success: boolean; message?: string } {
-        if (cell.owner !== player.id) return { success: false, message: 'Must own territory' };
-        if (cell.structure === 'farm') return { success: false, message: 'Cannot defend farm (must be empty)' }; // Based on interpretation
-        if (amount < 1 || amount > 9) return { success: false, message: 'Amount must be 1-9' };
+        if (cell.owner !== player.id) return { success: false, message: 'Must own this cell' };
 
-        if (player.gold < amount) return { success: false, message: 'Not enough gold' };
+        const validAmount = Math.max(1, Math.min(9, amount));
+        if (player.gold < validAmount) return { success: false, message: `Not enough gold (need ${validAmount}g)` };
 
-        player.gold -= amount;
-        cell.defense += amount; // Add to existing defense? Rules say "Invest any amount". Assuming additive.
-
+        player.gold -= validAmount;
+        cell.defense = Math.min(9, cell.defense + validAmount);
         return { success: true };
     }
 
@@ -235,20 +211,49 @@ export class Room {
         const nextIndex = (currentIndex + 1) % this.playerOrder.length;
         this.turn = this.playerOrder[nextIndex];
 
-        // Income Phase
         const nextPlayer = this.players.get(this.turn);
         if (nextPlayer) {
             nextPlayer.gold += nextPlayer.farms;
         }
+    }
 
-        // Bot Logic
-        if (this.turn === 'DEBUG_BOT') {
-            setTimeout(() => {
-                this.nextTurn();
-            }, 500);
+    checkWinCondition(): string | null {
+        if (this.status !== 'playing') return null;
+
+        const counts = new Map<string, number>();
+        for (const id of this.playerOrder) counts.set(id, 0);
+
+        for (const row of this.grid) {
+            for (const cell of row) {
+                if (cell.owner && counts.has(cell.owner)) {
+                    counts.set(cell.owner, (counts.get(cell.owner) ?? 0) + 1);
+                }
+            }
         }
 
-        // TODO: Connectivity Check
+        for (const [id, count] of counts) {
+            if (count === 0) {
+                const winner = this.playerOrder.find(p => p !== id) ?? null;
+                if (winner) this.status = 'finished';
+                return winner;
+            }
+        }
+        return null;
+    }
+
+    serialize(): SerializedRoom {
+        const players: Record<string, Player> = {};
+        this.players.forEach((p, id) => { players[id] = { ...p }; });
+        return {
+            id: this.id,
+            players,
+            grid: this.grid,
+            turn: this.turn,
+            status: this.status,
+            width: this.width,
+            height: this.height,
+            playerOrder: [...this.playerOrder]
+        };
     }
 
     private isValidCell(x: number, y: number): boolean {
@@ -256,21 +261,11 @@ export class Room {
     }
 
     private isAdjacentToTerritory(userId: string, x: number, y: number): boolean {
-        const directions = [
-            { dx: 0, dy: 1 },
-            { dx: 0, dy: -1 },
-            { dx: 1, dy: 0 },
-            { dx: -1, dy: 0 }
-        ];
-
-        for (const dir of directions) {
-            const nx = x + dir.dx;
-            const ny = y + dir.dy;
-            if (this.isValidCell(nx, ny)) {
-                if (this.grid[ny][nx].owner === userId) {
-                    return true;
-                }
-            }
+        const dirs = [{ dx: 0, dy: 1 }, { dx: 0, dy: -1 }, { dx: 1, dy: 0 }, { dx: -1, dy: 0 }];
+        for (const { dx, dy } of dirs) {
+            const nx = x + dx;
+            const ny = y + dy;
+            if (this.isValidCell(nx, ny) && this.grid[ny][nx].owner === userId) return true;
         }
         return false;
     }

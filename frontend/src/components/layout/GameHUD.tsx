@@ -1,72 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import NeonButton from '../ui/NeonButton';
-import { Wifi, Volume2, VolumeX, Home } from 'lucide-react';
+import { useGameState } from '../../hooks/useGameState';
+import { Wifi, WifiOff } from 'lucide-react';
 
 const GameHUD: React.FC = () => {
-  const { user, login, authCode } = useAuth();
-  const [isMuted, setIsMuted] = useState(false);
-  const [ping, setPing] = useState(0);
+    const { user, isLoading, authCode, login, logout } = useAuth();
+    const { isConnected } = useGameState();
 
-  useEffect(() => {
-    // Simulate ping updates
-    const interval = setInterval(() => {
-      setPing(Math.floor(Math.random() * 40) + 20);
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+    return (
+        <div className="fixed top-0 left-0 w-full h-12 bg-black/80 border-b border-cyan-900/30 backdrop-blur-sm z-40 flex items-center justify-between px-5">
+            {/* Left: brand */}
+            <span className="font-mono font-black text-sm tracking-[0.3em] text-cyan-500 neon-text-cyan select-none">
+                CELLWAR
+            </span>
 
-  return (
-    <div className="fixed top-0 left-0 w-full h-16 bg-black/80 border-b border-cyan-900/50 backdrop-blur-sm z-50 flex items-center justify-between px-6">
-      {/* Left: User Profile */}
-      <div className="flex items-center gap-4">
-        {user ? (
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img
-                src={user.avatar}
-                alt={user.username}
-                className="w-10 h-10 rounded-full border-2 border-cyan-500"
-              />
-              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border border-black"></div>
+            {/* Right: auth + connection */}
+            <div className="flex items-center gap-4">
+                {/* Connection indicator */}
+                <div className="flex items-center gap-1.5 font-mono text-xs">
+                    {isConnected
+                        ? <Wifi size={13} className="text-green-500" />
+                        : <WifiOff size={13} className="text-zinc-600" />}
+                    <span className={isConnected ? 'text-green-500' : 'text-zinc-600'}>
+                        {isConnected ? 'ONLINE' : 'OFFLINE'}
+                    </span>
+                </div>
+
+                {/* User section */}
+                {isLoading ? null : authCode ? (
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-zinc-500 font-mono uppercase">Code:</span>
+                        <span className="text-yellow-400 font-mono font-black tracking-[0.2em] animate-pulse">
+                            {authCode}
+                        </span>
+                    </div>
+                ) : user ? (
+                    <div className="flex items-center gap-3">
+                        {user.avatar && (
+                            <img src={user.avatar} alt="" className="w-7 h-7 rounded-full border border-cyan-700/50" />
+                        )}
+                        <div className="flex flex-col leading-none">
+                            <span className="text-cyan-400 font-mono font-bold text-xs tracking-wider">{user.username}</span>
+                            <span className="text-zinc-600 font-mono text-[10px]">{user.elo} ELO</span>
+                        </div>
+                        <button
+                            onClick={logout}
+                            className="text-[10px] font-mono text-zinc-600 hover:text-zinc-400 transition-colors uppercase"
+                        >
+                            logout
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={login}
+                        className="px-4 py-1.5 border border-cyan-700/60 text-cyan-400 font-mono font-bold text-xs uppercase tracking-widest hover:bg-cyan-950 hover:border-cyan-500 transition-colors rounded-sm"
+                    >
+                        JACK IN
+                    </button>
+                )}
             </div>
-            <div className="flex flex-col">
-              <span className="text-cyan-400 font-bold tracking-wider">{user.username}</span>
-              <span className="text-xs text-cyan-700 font-mono">ELO: {user.elo}</span>
-            </div>
-          </div>
-        ) : authCode ? (
-          <div className="flex flex-col items-start animate-pulse">
-            <span className="text-[10px] text-cyan-600 font-mono uppercase tracking-widest">Security Code</span>
-            <span className="text-xl text-yellow-400 font-black tracking-[0.2em] font-mono">{authCode}</span>
-          </div>
-        ) : (
-          <NeonButton onClick={login} className="!py-2 !px-4 text-sm">
-            JACK IN
-          </NeonButton>
-        )}
-      </div>
-
-      {/* Right: System Tray */}
-      <div className="flex items-center gap-6 text-cyan-500">
-        <div className="flex items-center gap-2 font-mono text-sm">
-          <Wifi size={16} className={ping > 100 ? 'text-red-500' : 'text-green-500'} />
-          <span>{ping}ms</span>
         </div>
-        
-        <button 
-          onClick={() => setIsMuted(!isMuted)}
-          className="hover:text-cyan-300 transition-colors"
-        >
-          {isMuted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-        </button>
-
-        <a href="/" className="hover:text-cyan-300 transition-colors">
-          <Home size={20} />
-        </a>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default GameHUD;

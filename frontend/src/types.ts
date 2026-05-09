@@ -6,7 +6,7 @@ export interface Cell {
     x: number;
     y: number;
     type: CellType;
-    owner: string | null; // userId
+    owner: string | null;
     structure: StructureType;
     defense: number;
 }
@@ -30,7 +30,7 @@ export interface MoveAction {
 
 export interface GameState {
     id: string;
-    players: Record<string, Player>; // Serialized Map
+    players: Record<string, Player>;
     grid: Cell[][];
     turn: string | null;
     status: RoomStatus;
@@ -39,20 +39,34 @@ export interface GameState {
     playerOrder: string[];
 }
 
-// Events
+export interface GameOverData {
+    winner: string | null;
+    reason: 'conquest' | 'surrender' | 'disconnect' | string;
+}
+
+export interface RoomInfo {
+    id: string;
+    host: string;
+    map: string;
+    players: string;
+    status: string;
+    latency: number;
+}
+
 export interface ServerToClientEvents {
     game_state: (state: GameState) => void;
-    error: (message: string) => void;
+    GAME_START: (data: { roomId: string; state: GameState }) => void;
+    game_over: (data: GameOverData) => void;
     joined_room: (roomId: string) => void;
-    GAME_START: (data: { roomId: string, state: any }) => void;
-    ROOM_LIST: (rooms: any[]) => void;
+    ROOM_LIST: (rooms: RoomInfo[]) => void;
+    error: (message: string) => void;
 }
 
 export interface ClientToServerEvents {
     FIND_MATCH: () => void;
-    set_ready: (ready: boolean) => void;
-    make_move: (action: MoveAction) => void;
-    DEBUG_START: () => void;
-    leave_game: () => void;
     GET_ROOMS: () => void;
+    DEBUG_START: () => void;
+    make_move: (action: MoveAction) => void;
+    end_turn: () => void;
+    leave_game: () => void;
 }

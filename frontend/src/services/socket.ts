@@ -1,83 +1,57 @@
 import { io, Socket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents } from '../types';
 
-const URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+
+// In production (served by backend), connect to same origin.
+// In dev, Vite proxy forwards /socket.io → localhost:3000.
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || '';
 
 class GameSocketService {
     private static instance: GameSocketService;
-    public socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+    public socket: GameSocket | null = null;
 
     private constructor() {}
 
-    public static getInstance(): GameSocketService {
-        if (!GameSocketService.instance) {
-            GameSocketService.instance = new GameSocketService();
-        }
+    static getInstance(): GameSocketService {
+        if (!GameSocketService.instance) GameSocketService.instance = new GameSocketService();
         return GameSocketService.instance;
     }
 
-    public connect(token?: string) {
-        console.log('Connecting to socket...', URL);
+    connect(token?: string) {
+        // If already connected with same auth, skip
         if (this.socket?.connected) return;
 
-        const auth = token ? { token: `Bearer ${token}` } : undefined;
-
-        this.socket = io(URL, {
-            auth,
-            transports: ['websocket'],
-            withCredentials: true
-        });
-
-        this.socket.on('connect', () => {
-            console.log('Connected to game server');
-        });
-
-        this.socket.on('disconnect', () => {
-            console.log('Disconnected from game server');
-        });
-
-        this.socket.on("connect_error", (err) => {
-          console.error("SOCKET CONNECT ERROR:", err.message);
-        });
-    }
-
-    public disconnect() {
+        // Disconnect stale socket before creating a new one
         if (this.socket) {
             this.socket.disconnect();
             this.socket = null;
         }
+
+        const auth: Record<string, string> = {};
+        if (token) auth.token = token;
+
+        this.socket = io(SOCKET_URL, {
+            auth,
+            withCredentials: true,
+            transports: ['websocket', 'polling']
+        });
+
+        this.socket.on('connect', () => console.log('[socket] connected', this.socket?.id));
+        this.socket.on('disconnect', (reason) => console.log('[socket] disconnected', reason));
+        this.socket.on('connect_error', (err) => console.error('[socket] error', err.message));
     }
 
-    public joinQueue() {
-        this.emit('FIND_MATCH');
+    disconnect() {
+        this.socket?.disconnect();
+        this.socket = null;
     }
 
-    public debugStart() {
-        this.emit('DEBUG_START');
-    }
-
-    public getRooms() {
-        this.emit('GET_ROOMS');
-    }
-
-    public emit<T extends keyof ClientToServerEvents>(event: T, ...args: Parameters<ClientToServerEvents[T]>) {
-        if (this.socket) {
-            this.socket.emit(event, ...args);
-        }
-    }
-
-    public on<T extends keyof ServerToClientEvents>(event: T, callback: ServerToClientEvents[T]) {
-        if (this.socket) {
-            // @ts-ignore: socket.io types are tricky with generics
-            this.socket.on(event, callback);
-        }
-    }
-
-    public off<T extends keyof ServerToClientEvents>(event: T, callback: ServerToClientEvents[T]) {
-        if (this.socket) {
-            // @ts-ignore: socket.io types are tricky with generics
-            this.socket.off(event, callback);
-        }
+    emit<E extends keyof ClientToServerEvents>(
+        event: E,
+        ...args: Parameters<ClientToServerEvents[E]>
+    ) {
+        this.socket?.emit(event, ...args);
     }
 }
 

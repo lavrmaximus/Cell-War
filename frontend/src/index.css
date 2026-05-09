@@ -2,14 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #050505;
-  color: #ffffff;
-  overflow: hidden;
+* {
+  box-sizing: border-box;
 }
 
-.glass-panel {
-  backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: #030303;
+  color: #ffffff;
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-sm bg-black/40 border border-cyan-900/30;
+  }
+
+  .neon-text-cyan {
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+  }
+
+  .neon-text-rose {
+    text-shadow: 0 0 8px rgba(244, 63, 94, 0.6);
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(34, 211, 238, 0.2) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(34, 211, 238, 0.2);
+    border-radius: 2px;
+  }
 }

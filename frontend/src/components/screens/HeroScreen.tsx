@@ -1,115 +1,135 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
-import NeonButton from '../ui/NeonButton';
 import { useGameState } from '../../hooks/useGameState';
 import { useAuth } from '../../context/AuthContext';
-import { gameSocket } from '../../services/socket';
+import { Swords, Server, Bug, Lock } from 'lucide-react';
+import { cn } from '../../utils/cn';
 
-interface HeroScreenProps {
-  onNavigate: (screen: string) => void;
+interface Props {
+    onNavigate: (screen: 'hero' | 'lobby' | 'game') => void;
 }
 
-const HeroScreen: React.FC<HeroScreenProps> = ({ onNavigate }) => {
-  const { joinGame } = useGameState();
-  const { user } = useAuth();
-  const [isSearching, setIsSearching] = useState(false);
+const HeroScreen: React.FC<Props> = ({ onNavigate }) => {
+    const { joinGame, debugStart, isSearching, isConnected } = useGameState();
+    const { user } = useAuth();
 
-  const handleQuickMatch = () => {
-    setIsSearching(true);
-    joinGame();
-  };
+    const handleQuickMatch = () => {
+        if (!user) return;
+        joinGame();
+    };
 
-  const menuItems = [
-    { label: isSearching ? 'SEARCHING...' : 'QUICK MATCH', action: handleQuickMatch, disabled: isSearching },
-    { label: 'SERVER BROWSER', action: () => onNavigate('lobby'), disabled: isSearching },
-    // { label: 'TRAINING', action: () => console.log('Training'), disabled: isSearching },
-  ];
+    const items = [
+        {
+            label: isSearching ? 'SEARCHING...' : 'QUICK MATCH',
+            icon: <Swords size={18} />,
+            action: handleQuickMatch,
+            disabled: !user || isSearching || !isConnected,
+            disabledReason: !user ? 'Login required' : !isConnected ? 'Connecting...' : undefined,
+        },
+        {
+            label: 'SERVER BROWSER',
+            icon: <Server size={18} />,
+            action: () => onNavigate('lobby'),
+            disabled: false,
+        },
+    ];
 
-  if (user?.role === 'admin') {
-    menuItems.push({
-      label: '🛠 DEBUG SIMULATION',
-      action: () => gameSocket.debugStart(),
-      disabled: false
-    });
-  }
+    if (user?.role === 'admin') {
+        items.push({
+            label: 'DEBUG SIMULATION',
+            icon: <Bug size={16} />,
+            action: debugStart,
+            disabled: isSearching || !isConnected,
+            disabledReason: undefined,
+        });
+    }
 
-  return (
-    <div className="flex flex-col items-center justify-center h-screen w-full relative overflow-hidden bg-[#050505]">
-      {/* Background Grid Effect */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
-      
-      <div className="z-10 flex flex-col items-center gap-12">
-        <div className="relative mb-8">
-          <motion.h1 
-            className="text-7xl md:text-9xl font-black tracking-widest text-white relative z-10 select-none"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          >
-            CELLWAR
-          </motion.h1>
-          
-          {/* Glitch Layers */}
-          <motion.h1 
-            className="text-7xl md:text-9xl font-black tracking-widest text-cyan-500 absolute top-0 left-0 -z-10 select-none opacity-50 mix-blend-screen"
-            animate={{ 
-              x: [-2, 3, -1, 2, 0],
-              y: [1, -2, 0, 1, 0],
-              opacity: [0.5, 0.8, 0.5]
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 0.2,
-              repeatType: "mirror",
-              repeatDelay: 3
-            }}
-          >
-            CELLWAR
-          </motion.h1>
-          <motion.h1 
-            className="text-7xl md:text-9xl font-black tracking-widest text-red-500 absolute top-0 left-0 -z-10 select-none opacity-50 mix-blend-screen"
-            animate={{ 
-              x: [2, -3, 1, -2, 0],
-              y: [-1, 2, 0, -1, 0],
-              opacity: [0.5, 0.8, 0.5]
-            }}
-            transition={{ 
-              repeat: Infinity, 
-              duration: 0.25,
-              repeatType: "mirror",
-              repeatDelay: 3.5
-            }}
-          >
-            CELLWAR
-          </motion.h1>
+    return (
+        <div className="flex flex-col items-center justify-center h-full w-full relative overflow-hidden bg-[#030303] pt-12">
+            {/* Grid background */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#111_1px,transparent_1px),linear-gradient(to_bottom,#111_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_40%,black_40%,transparent_100%)] pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col items-center gap-14">
+                {/* Title */}
+                <div className="relative select-none">
+                    <motion.h1
+                        className="text-[5rem] sm:text-[8rem] font-black tracking-[0.15em] text-white relative z-10"
+                        initial={{ opacity: 0, y: -20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        CELLWAR
+                    </motion.h1>
+                    {/* Cyan glitch layer */}
+                    <motion.h1
+                        aria-hidden
+                        className="text-[5rem] sm:text-[8rem] font-black tracking-[0.15em] text-cyan-500 absolute inset-0 mix-blend-screen opacity-60"
+                        animate={{ x: [-2, 3, -1, 0], y: [1, -1, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.18, repeatType: 'mirror', repeatDelay: 4 }}
+                    >
+                        CELLWAR
+                    </motion.h1>
+                    {/* Red glitch layer */}
+                    <motion.h1
+                        aria-hidden
+                        className="text-[5rem] sm:text-[8rem] font-black tracking-[0.15em] text-rose-500 absolute inset-0 mix-blend-screen opacity-50"
+                        animate={{ x: [2, -2, 1, 0], y: [-1, 2, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.22, repeatType: 'mirror', repeatDelay: 5 }}
+                    >
+                        CELLWAR
+                    </motion.h1>
+                </div>
+
+                {/* Menu */}
+                <div className="flex flex-col gap-3 w-72">
+                    {items.map((item, i) => (
+                        <motion.button
+                            key={item.label}
+                            onClick={item.action}
+                            disabled={item.disabled}
+                            title={item.disabledReason}
+                            initial={{ opacity: 0, x: -30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.3 + i * 0.08 }}
+                            className={cn(
+                                'flex items-center gap-3 px-6 py-3.5 border-2 font-mono font-bold uppercase tracking-widest text-sm rounded-sm transition-all duration-200',
+                                item.disabled
+                                    ? 'border-zinc-800 text-zinc-600 cursor-not-allowed'
+                                    : 'border-cyan-600/70 text-cyan-400 hover:bg-cyan-950 hover:border-cyan-400 hover:text-white hover:shadow-neon-cyan'
+                            )}
+                        >
+                            {item.icon}
+                            <span>{item.label}</span>
+                            {item.disabledReason && (
+                                <Lock size={12} className="ml-auto opacity-50" />
+                            )}
+                        </motion.button>
+                    ))}
+                </div>
+
+                {/* Login prompt */}
+                {!user && (
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7 }}
+                        className="text-xs font-mono text-zinc-600 tracking-widest"
+                    >
+                        JACK IN via the top menu to play
+                    </motion.p>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="absolute bottom-6 w-full flex justify-between px-10 text-zinc-700 text-xs font-mono tracking-[0.2em] uppercase">
+                <span>v0.9.3</span>
+                <span className={cn('flex items-center gap-1.5', isConnected ? 'text-green-700' : 'text-red-900')}>
+                    <span className={cn('w-1.5 h-1.5 rounded-full', isConnected ? 'bg-green-600 animate-pulse' : 'bg-red-900')} />
+                    {isConnected ? 'ONLINE' : 'OFFLINE'}
+                </span>
+            </div>
         </div>
-
-        <div className="flex flex-col gap-6 w-64">
-          {menuItems.map((item, index) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 + index * 0.1 }}
-            >
-              <NeonButton
-                onClick={item.action}
-                className={`w-full ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                disabled={item.disabled}
-              >
-                {item.label}
-              </NeonButton>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      <div className="absolute bottom-8 w-full flex justify-between px-12 text-gray-500 text-xs md:text-sm tracking-[0.2em] uppercase">
-        <span>v0.9.2 BETA</span>
-        <span>System Status: <span className="text-green-500 animate-pulse">ONLINE</span></span>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default HeroScreen;
